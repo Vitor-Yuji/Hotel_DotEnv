@@ -1,0 +1,40 @@
+# Render Blueprint: Backend (Node) + Frontend (Static)
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: hotel-backend
+    env: node
+    rootDir: backend
+    buildCommand: |
+      npm ci
+    startCommand: |
+      node server.js
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      # Configure no dashboard do Render (Settings > Environment):
+      # SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, JWT_SECRET, JWT_EXPIRES_IN, CORS_ORIGIN
+
+  - type: static
+    name: hotel-frontend
+    rootDir: frontend
+    buildCommand: |
+      npm ci && npm run build
+    publishPath: build
+    routes:
+      - type: redirect
+        source: "/api/*"
+        destination: "https://hotel-backend.onrender.com/api/:splat"
+        status: 200
+      - type: rewrite
+        source: "/*"
+        destination: "/index.html"
+    
+    # Defina REACT_APP_API_URL no dashboard do Render para apontar para o backend, ex:
+    # https://hotel-backend.onrender.com/api
